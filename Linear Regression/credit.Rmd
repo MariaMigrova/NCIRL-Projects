@@ -1,0 +1,170 @@
+---
+title: "STATISTICS PROJECT"
+author: "Maria Migrova"
+date: "11/8/2021"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(modelr)
+library(Metrics)
+library(MLmetrics)
+library(lmtest)
+library(robust)
+```
+
+```{r}
+#Reading the data
+credit.df <- read.csv("Credit_v2.csv",fileEncoding = "UTF-8-BOM")
+#Summarising the data
+summary(credit.df)
+glimpse(credit.df)
+```
+
+```{r}
+ggplot(data=credit.df,aes(x=age,y=creddebt))+
+  geom_point()
+
+
+ggplot(data=credit.df,aes(x=ed,y=creddebt))+
+  geom_point()
+
+ggplot(data=credit.df,aes(x=employ,y=creddebt))+
+  geom_point()
+
+ggplot(data=credit.df,aes(x=address,y=creddebt))+
+  geom_point()
+
+ggplot(data=credit.df,aes(x=income,y=creddebt))+
+  geom_point()
+
+ggplot(data=credit.df,aes(x=debtinc,y=creddebt))+
+  geom_point()
+
+ggplot(data=credit.df,aes(x=othdebt,y=creddebt))+
+  geom_point()
+
+ggplot(data=credit.df,aes(x=default,y=creddebt))+
+  geom_point()
+
+```
+```{r}
+credit_lmmodel_1 <- lm(creddebt ~ employ, data = credit.df)
+broom::glance(credit_lmmodel_1)
+```
+```{r}
+credit_lmmodel_2 <- lm(creddebt ~ income, data = credit.df)
+broom::glance(credit_lmmodel_2)
+```
+```{r}
+credit_lmmodel_3 <- lm(creddebt ~ debtinc, data = credit.df)
+broom::glance(credit_lmmodel_3)
+```
+```{r}
+credit_lmmodel_4 <- lm(creddebt ~ othdebt, data = credit.df)
+broom::glance(credit_lmmodel_4)
+```
+```{r}
+credit_lmmodel_5 <- lm(creddebt ~ employ + income + debtinc + othdebt, data = credit.df)
+broom::glance(credit_lmmodel_5)
+
+
+```
+
+```{r}
+credit_lmmodel_6 <- lm(creddebt ~ employ * income * debtinc * othdebt, data = credit.df)
+broom::glance(credit_lmmodel_6)
+
+```
+```{r}
+credit_lmmodel_7 <- lm(creddebt ~ income + debtinc + othdebt, data = credit.df)
+broom :: glance(credit_lmmodel_7)
+
+```
+
+```{r}
+#adding predictions and calculated residuals
+credit.lm1 <- credit.df %>%
+  add_predictions(credit_lmmodel_5)%>%
+  add_residuals(credit_lmmodel_5)
+
+head(credit.lm1)
+```
+```{r}
+#adding predictions and calculated residuals
+credit.lm2 <- credit.df %>%
+  add_predictions(credit_lmmodel_6)%>%
+  add_residuals(credit_lmmodel_6)
+
+head(credit.lm2)
+
+```
+```{r}
+plot(credit_lmmodel_5)
+
+```
+```{r}
+plot(credit_lmmodel_5)
+
+```
+```{r}
+bptest(credit_lmmodel_5)
+
+```
+```{r}
+
+credit_lmmodel_5 <- lm(log(creddebt) ~ employ + income + debtinc + othdebt, data = credit.df)
+broom::glance(credit_lmmodel_5)
+```
+```{r}
+plot(credit_lmmodel_5)
+
+```
+
+```{r}
+#Plot the results
+ggplot(credit.lm1)+
+  geom_line(aes(age, pred), col = "red")+
+  geom_line(aes(age,creddebt ))+
+  labs(y="Cred debt",title="Predicted Cred debt using linear model")
+```
+```{r}
+#plot residuals
+ggplot(credit.lm1,aes(age, resid))+
+  geom_ref_line(h=0)+
+  geom_line()+
+  labs(title="Residuals of the linear model")
+
+```
+
+```{r}
+#Plot the results
+ggplot(credit.lm2)+
+  geom_line(aes(age, pred), col = "red")+
+  geom_line(aes(age,creddebt ))+
+  labs(y="Cred debt",title="Predicted Cred debt using linear model")
+```
+```{r}
+#plot residuals
+ggplot(credit.lm2,aes(age, resid))+
+  geom_ref_line(h=0)+
+  geom_line()+
+  labs(title="Residuals of the linear model")
+
+```
+
+```{r}
+#First model
+MAPE(credit.lm1$pred,credit.lm1$creddebt)
+MAE(credit.lm1$pred,credit.lm1$creddebt)
+MSE(credit.lm1$pred,credit.lm1$creddebt)
+```
+```{r}
+#Second model
+MAPE(credit.lm2$pred,credit.lm2$creddebt)
+MAE(credit.lm2$pred,credit.lm2$creddebt)
+MSE(credit.lm2$pred,credit.lm2$creddebt)
+
+```

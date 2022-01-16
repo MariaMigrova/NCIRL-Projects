@@ -1,0 +1,444 @@
+---
+title: "Statistics PROJECT"
+author: "Maria Migrova"
+date: "12/31/2021"
+output:
+  word_document: default
+  html_document: default
+---
+```{r}
+#Loading the libraries
+library(dplyr)
+library(stats)
+library(ggplot2)
+library(forecast)
+library(MLmetrics)
+library(smooth)
+library(TTR)
+library(modelr)
+library(ROCR)
+library(foreign)
+library(fpp2)
+library(aTSA)
+library(tsbox)
+library(caret)
+library(InformationValue)
+library(ISLR)
+library(cowplot)
+library(knitr)
+library(arm)
+library(tidyr)
+library(regclass)
+library(car)
+```
+
+
+```{r}
+#Reading the csv file
+ecomnsa.df <- read.csv("eComm_US.csv",fileEncoding = "UTF-8-BOM")
+tail(ecomnsa.df)
+
+```
+
+```{r}
+#Summarising the data
+glimpse(ecomnsa.df)
+summary(ecomnsa.df)
+```
+
+```{r}
+#CHanging DATE data into date format
+#Changing the dataframe into time series
+ecomnsa.df$DATE <- as.Date(ecomnsa.df$DATE)
+#Checking the structure of the DATE column
+str(ecomnsa.df$DATE)
+#Converting the dataframe to a time series object
+tsecomnsa.df <- ts_ts(ts_long(ecomnsa.df))
+#Plotting
+autoplot(tsecomnsa.df)
+plot(tsecomnsa.df, 
+     xlab = "Yearly data",
+     ylab = "E-commerce retail sales",
+     main = "E-commerce", 
+     col.main = "darkgreen")
+```
+
+```{r}
+#Summarising the data
+summary(tsecomnsa.df)
+start(tsecomnsa.df)
+end(tsecomnsa.df)
+frequency(tsecomnsa.df)
+str(tsecomnsa.df)
+```
+
+
+```{r}
+#Seasonal decomposition of the time series
+#In this plot seasonality is clearly evident, therefor multiplicative would be more appropriate.Seasonality increases with the trend.
+plot(tsecomnsa.df)
+#Here we can see that in 1st and 3rd quarter the United States e-commerce retail sales are the highest
+monthplot(tsecomnsa.df)
+#Here we can see the same information a little bit different plot. The sales drop in 2nd and 4th quarter
+seasonplot(tsecomnsa.df)
+#Using the multiplicative model for seasonal decomposition
+fit.decmult <- decompose(tsecomnsa.df,type = 'multiplicative')
+#Here we have different components of time series
+fit.decmult
+#Here we can see the plot. Here we can see the different components. The first is observed raw time series, trend in the series, seasonal dimension to the series and random dimension to the series.
+plot(fit.decmult)
+#THis model is not appropriate
+fit.decadd <- decompose(tsecomnsa.df, type = "additive")
+fit.decadd
+plot(fit.decadd)
+
+
+```
+
+
+```{r}
+#Centered moving average smoothing with 3 day moving average
+tsecomnsasmooth.df <- ma(tsecomnsa.df,3)
+
+```
+
+```{r}
+#Simple moving average
+
+#Calculating 3 days moving average
+ecomnsa.df$MA5 <- TTR::SMA(ecomnsa.df$ECOMNSA, n = 3)
+
+# Calculate 5 days moving average
+ecomnsa.df$MA10 <- TTR::SMA( ecomnsa.df$ECOMNSA, n = 5)
+
+
+# Now we plot the values in ggplot
+pl <- ggplot(ecomnsa.df , aes(x = DATE))
+pl <- pl + geom_line(aes(y = ECOMNSA, color = "Close"), group = 1)
+pl <- pl + geom_line(aes(y = MA5, color = "MA3"),group = 1)
+pl <- pl + geom_line(aes(y = MA10, color = "MA5"), group = 1)
+pl <- pl +  theme_minimal()
+#pl <- pl + theme(legend.title = "Moving Ave." )
+pl <- pl + theme(legend.position = "top")
+pl <- pl + labs(title ="Moving averages")
+pl <- pl + labs(color="Prices")
+pl
+
+#Will return the plot of the raw time series, and Auto correlation function plot and partial auto correlation function plot.
+ggtsdisplay(tsecomnsa.df)
+#We will use this for ARIMA model
+
+```
+
+
+
+```{r}
+#The Mean Method
+ecomnsa.fc <- meanf(tsecomnsasmooth.df, h=3)
+ 
+# Plotting and summarizing the forecasts
+autoplot(ecomnsa.fc,xlab = "Year", ylab = "E-commerce retail sales")
+summary(ecomnsa.fc)
+
+```
+
+```{r}
+#The Naive Method
+ecomnsa.fc2 <- naive(tsecomnsasmooth.df, h=3)
+
+#Plotting and summarising the forecast
+autoplot(ecomnsa.fc2)
+summary(ecomnsa.fc2)
+
+```
+
+
+```{r}
+#The Seasonal Naive Method
+ecomnsa.fc3 <- snaive(tsecomnsasmooth.df,h=3)
+
+#Plotting and summarising the forecast
+autoplot(ecomnsa.fc3)
+summary(ecomnsa.fc3)
+```
+
+
+```{r}
+checkresiduals(ecomnsa.fc)
+
+```
+
+
+```{r}
+checkresiduals(ecomnsa.fc2)
+
+```
+```{r}
+checkresiduals(ecomnsa.fc3)
+
+```
+
+
+```{r}
+plot(tsecomnsa.df)
+#d value
+ndiffs(tsecomnsa.df)
+#Assessing stationarity of the differenced series
+#Augmented Dickey-Fuller test which check stationarity of the different series.The p-value in our case is less than 0.01, therefor we can reject the null hypothesis and accept the alternative hypothesis which is stated as stationary process.
+
+```
+
+
+```{r}
+Acf(tsecomnsa.df)
+Pacf(tsecomnsa.df)
+
+```
+ARIMA (1 1 0)
+
+```{r}
+#ARIMA(1 1 0)
+ecomnsa.fc6 <- arima(tsecomnsa.df, c(1,1,0))
+ecomnsa.fc6
+summary(ecomnsa.fc6)
+
+```
+```{r}
+#Checking residuals
+qqnorm(ecomnsa.fc6$residuals)
+qqline(ecomnsa.fc6$residuals)
+checkresiduals(ecomnsa.fc6)
+
+```
+```{r}
+Box.test(ecomnsa.fc6$residuals, type="Ljung-Box")
+
+```
+```{r}
+
+forecast_sales <- forecast(ecomnsa.fc6, 3)
+
+
+```
+Automatic ARIMA
+```{r}
+ecomnsa.fc7<- auto.arima(tsecomnsa.df)
+ecomnsa.fc7
+summary(ecomnsa.fc7)
+```
+```{r}
+qqnorm(ecomnsa.fc7$residuals)
+qqline(ecomnsa.fc7$residuals)
+
+```
+```{r}
+Box.test(ecomnsa.fc7$residuals,type = "Ljung-Box")
+
+```
+
+########################################################################### PART 2 ###############################################################################
+
+```{r}
+#Reading the sav file and saving it into house.df dataframe
+house.df <- read.spss("House Categories.sav",fileEncoding = "UTF-8-BOM", to.data.frame = TRUE)
+house.df
+
+
+```
+```{r}
+#Summarising the data
+glimpse(house.df)
+summary(house.df)
+
+```
+```{r}
+#Changing the data to factors
+house.df$fuel <- as.factor(house.df$fuel)
+house.df$waterfront <- as.factor(house.df$waterfront)
+house.df$newConstruction <- as.factor(house.df$newConstruction)
+```
+
+```{r}
+#Checking for NA values
+sum(is.na(house.df))
+house.df[mapply(is.infinite, house.df)] <- NA
+sum(is.nan(as.matrix(house.df)))
+```
+
+```{r}
+#Splitting the data into train and test datasets
+set.seed(03012021)
+sample <- sample(c(TRUE,FALSE),nrow(house.df),replace=TRUE,prob=c(0.7,0.3))
+train <- house.df[sample, ]
+test <- house.df[!sample, ]
+dim(train)
+dim(test)
+glimpse(house.df)
+```
+
+```{r}
+#Creating a model
+model1 <- glm(PriceCat ~ ., data=train, family=binomial)
+#Summarising the model
+summary(model1)
+
+```
+
+```{r}
+#ANOVA
+anova(model1,test="Chisq")
+
+```
+
+
+```{r}
+#Confusion Matrix of the first model
+predicted <- predict(model1, test,type="response")
+test$PriceCat <- ifelse(test$PriceCat=="Expensive",1,0)
+optimal <- optimalCutoff(test$PriceCat, predicted)[1]
+confusionmatrix <- confusionMatrix(test$PriceCat,predicted)
+kable(confusionmatrix)
+```
+
+
+```{r}
+#Calculating sensitivity
+sensitivity(test$PriceCat, predicted)
+
+#Calculating specificity
+specificity(test$PriceCat, predicted)
+
+#Calculating total misclassification error rate
+misClassError(test$PriceCat, predicted, threshold = optimal)
+
+```
+
+```{r}
+model2 <- glm(PriceCat ~ landValue+ livingArea+ age + lotSize + bathrooms, data=train, family=binomial)
+summary(model2)
+
+```
+
+```{r}
+anova(model2,test="Chisq")
+
+```
+
+```{r}
+#Confusion Matrix of the second model
+predicted <- predict(model2, test,type="response")
+test$PriceCat <- ifelse(test$PriceCat=="Expensive",1,0)
+optimal <- optimalCutoff(test$PriceCat, predicted)[1]
+confusionmatrix2 <- confusionMatrix(test$PriceCat,predicted)
+kable(confusionmatrix2)
+
+```
+
+
+```{r}
+#Calculating sensitivity
+sensitivity(test$PriceCat, predicted)
+
+#Calculating specificity
+specificity(test$PriceCat, predicted)
+
+#Calculating total misclassification error rate
+misClassError(test$PriceCat, predicted, threshold = optimal)
+
+```
+
+
+```{r}
+predicted.data <- data.frame(probability.of.PriceCat = model2$fitted.values, PriceCat = train$PriceCat)
+predicted.data <- predicted.data[order(predicted.data$probability.of.PriceCat, decreasing = FALSE),]
+predicted.data$rank <- 1:nrow(predicted.data)
+```
+
+```{r}
+#Graph that shows the predicted probabilities of the houses' Price category along with their real price category
+ggplot(data=predicted.data,aes(x=rank,y=probability.of.PriceCat))+
+        geom_point(aes(color=PriceCat),alpha=0.2,shape=4,stroke=2,position = "jitter")+
+        xlab("Index")+
+        ylab("Predicted probability of being in Expensive Price Category")
+
+```
+
+```{r}
+#RESIDUALS ASSUMPTION
+binnedplot(fitted(model2),
+           residuals(model2,type="response"),
+           nclass=NULL,
+           cex.pts = 0.8,
+           col.pts = 1,
+           col.int = "gray")
+
+```
+
+```{r}
+#LINEARITY ASSUMPTION
+VIF(model2)
+
+```
+```{r}
+#INFLUENTIAL VALUES ASSUMPTION
+plot(model2, which = 4, id.n = 3)
+
+
+```
+```{r}
+#Extracting model results
+model.data <- broom::augment(model2) %>% 
+  mutate(index = 1:n()) 
+#Viewing the top 3 points
+model.data %>% top_n(3, .cooksd)
+```
+
+```{r}
+#Plotting the results
+ggplot(model.data, aes(index, .std.resid)) + 
+  geom_point(aes(color = PriceCat), alpha = .5) +
+  theme_bw()
+
+```
+
+
+```{r}
+#LINEARITY ASSUMPTION
+probabilities <- predict(model2,type="response")
+logit = log(probabilities/(1-probabilities))
+
+```
+
+```{r}
+#LAND VALUE
+ggplot(train,aes(logit, landValue))+
+  geom_point(size=0.5,alpha=0.5)+
+  geom_smooth(method="loess")+
+  theme_minimal()
+
+```
+```{r}
+#LIVING AREA
+ggplot(train,aes(logit, livingArea))+
+  geom_point(size=0.5,alpha=0.5)+
+  geom_smooth(method="loess")+
+  theme_minimal()
+
+```
+```{r}
+#AGE
+ggplot(train,aes(logit, age))+
+  geom_point(size=0.5,alpha=0.5)+
+  geom_smooth(method="loess")+
+  theme_minimal()
+
+```
+
+```{r}
+#LOT SIZE
+ggplot(train,aes(logit, lotSize))+
+  geom_point(size=0.5,alpha=0.5)+
+  geom_smooth(method="loess")+
+  theme_minimal()
+
+```
