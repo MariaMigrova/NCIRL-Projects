@@ -1,5 +1,5 @@
 # NCIRL-Projects
-## Project Title: Multiple Linear Regression
+## 1. Project Title: Multiple Linear Regression
 ### Introduction
 Predictive modeling, also known as predictive analysis, involves forecasting future events or outcomes by examining patterns from historical data. The main objective is to predict future results based on past behavior. This approach finds applications in various fields such as weather forecasting, customer behavior analysis, and pricing strategies. The process of predictive modeling involves determining the appropriate model family and fitting the model to the data.
 
@@ -25,6 +25,38 @@ Assumption tests reveal issues with linearity, normality, and homoskedasticity i
 ### Data Accuracy Metrics
 We evaluate model performance using Mean Absolute Error (MAE), Mean Absolute Percentage Error (MAPE), and Mean Squared Error (MSE) metrics. Both models perform well, but the second model outperforms the first significantly.
 
+## 2. Project Title: Time Series and Logistic Regression
+### Introduction to Time Series
+Defined time series as data collected over time, with components including trend, cyclical effect, seasonal variation, and residual effect.
 
+### Forecasting Methods:
+Mean Forecast Method: Using the average of the time series to predict future values.
+Naive Method: Forecasting future values based on the value of the previous period.
+Seasonal Naive Method: Modifying the Naive Method for highly seasonal data.
+ARIMA Method: Auto-Regressive Integrated Moving Average method for time series forecasting.
 
-Projects from Statistics in Data Analytics in NCIRL
+### Model Evaluation:
+Calculated forecast accuracies using Mean Absolute Percentage Error (MAPE) and Root Mean Squared Error (RMSE).
+Evaluated each forecasting method's performance based on RMSE and MAPE values.
+
+### Conclusion and Future Work:
+Identified the Naive Method as the best-performing forecasting model.
+Suggested future work including exploring more complex time series forecasting models like SARIMA, XGBoost, or LSTM algorithms.
+
+### Logistic Regression Analysis:
+#### Introduction to Logistic Regression
+Defined logistic regression as a method for predicting a categorical dependent variable based on independent factors.
+
+#### Assumptions of Logistic Regression:
+Dependent variable must be categorical.
+No multicollinearity in independent variables.
+Independence of errors.
+Linearity in the logit for continuous variables.
+
+#### Model Building and Evaluation:
+Created logistic regression models using glm() function in R.
+Evaluated model coefficients, AIC values, and performed Confusion Matrix analysis.
+
+#### Conclusion and Future Work:
+Found the second logistic regression model slightly outperformed the first one.
+Suggested potential improvements such as normalizing data, addressing class imbalance, hyperparameter tuning, exploring more classifiers, or conducting error analysis.
